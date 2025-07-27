@@ -1,0 +1,201 @@
+‎'use client'
+‎import { useState } from 'react'
+‎
+‎export default function SalesRecording({ stock, shop, onUpdate }) {
+‎  const [sale, setSale] = useState({
+‎    itemId: '',
+‎    quantity: '',
+‎    price: '',
+‎    customerName: '',
+‎    customerPhone: ''
+‎  })
+‎  const [error, setError] = useState('')
+‎  const [success, setSuccess] = useState('')
+‎
+‎  const handleInputChange = (e) => {
+‎    const { name, value } = e.target
+‎    setSale(prev => ({ ...prev, [name]: value }))
+‎  }
+‎
+‎  const handleSubmit = () => {
+‎    setError('')
+‎    setSuccess('')
+‎    
+‎    // Validation
+‎    if (!sale.itemId || !sale.quantity || !sale.price) {
+‎      setError('Item, quantity and price are required')
+‎      return
+‎    }
+‎
+‎    const quantity = parseInt(sale.quantity)
+‎    const price = parseFloat(sale.price)
+‎
+‎    if (isNaN(quantity) || quantity <= 0) {
+‎      setError('Quantity must be a positive number')
+‎      return
+‎    }
+‎
+‎    if (isNaN(price) || price <= 0) {
+‎      setError('Price must be a positive number')
+‎      return
+‎    }
+‎
+‎    // Check stock availability
+‎    const selectedItem = stock.find(item => item.id === parseInt(sale.itemId))
+‎    if (!selectedItem) {
+‎      setError('Selected item not found')
+‎      return
+‎    }
+‎
+‎    if (selectedItem.quantity < quantity) {
+‎      setError(`Only ${selectedItem.quantity} items available in stock`)
+‎      return
+‎    }
+‎
+‎    // Record sale
+‎    const sales = JSON.parse(localStorage.getItem('sales')) || []
+‎    const newSale = {
+‎      id: Date.now(),
+‎      itemId: selectedItem.id,
+‎      itemName: selectedItem.name,
+‎      brand: selectedItem.brand,
+‎      quantity,
+‎      price,
+‎      total: quantity * price,
+‎      customerName: sale.customerName || 'Walk-in',
+‎      customerPhone: sale.customerPhone || '',
+‎      date: new Date().toISOString(),
+‎      shop
+‎    }
+‎
+‎    // Update stock
+‎    const updatedStock = {
+‎      ...JSON.parse(localStorage.getItem('stock')),
+‎      [shop]: stock.map(item => 
+‎        item.id === selectedItem.id 
+‎          ? { ...item, quantity: item.quantity - quantity }
+‎          : item
+‎      )
+‎    }
+‎
+‎    localStorage.setItem('sales', JSON.stringify([...sales, newSale]))
+‎    localStorage.setItem('stock', JSON.stringify(updatedStock))
+‎    
+‎    setSuccess(`Sale recorded successfully! ${quantity} ${selectedItem.name} sold for $${(quantity * price).toFixed(2)}`)
+‎    setSale({
+‎      itemId: '',
+‎      quantity: '',
+‎      price: '',
+‎      customerName: '',
+‎      customerPhone: ''
+‎    })
+‎    
+‎    if (onUpdate) onUpdate()
+‎  }
+‎
+‎  return (
+‎    <div className="bg-white p-4 rounded-lg shadow">
+‎      <h2 className="text-xl font-semibold mb-4">Record Sale</h2>
+‎      
+‎      {error && <p className="text-red-500 mb-4">{error}</p>}
+‎      {success && <p className="text-green-500 mb-4">{success}</p>}
+‎      
+‎      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+‎        <div>
+‎          <label className="block text-sm font-medium mb-1">Item</label>
+‎          <select
+‎            name="itemId"
+‎            value={sale.itemId}
+‎            onChange={handleInputChange}
+‎            className="w-full px-3 py-2 border rounded"
+‎            required
+‎          >
+‎            <option value="">Select Item</option>
+‎            {stock.map(item => (
+‎              <option key={item.id} value={item.id}>
+‎                {item.name} - {item.brand} (Available: {item.quantity})
+‎              </option>
+‎            ))}
+‎          </select>
+‎        </div>
+‎        
+‎        <div>
+‎          <label className="block text-sm font-medium mb-1">Quantity</label>
+‎          <input
+‎            type="number"
+‎            name="quantity"
+‎            value={sale.quantity}
+‎            onChange={handleInputChange}
+‎            className="w-full px-3 py-2 border rounded"
+‎            min="1"
+‎            required
+‎          />
+‎        </div>
+‎      </div>
+‎      
+‎      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+‎        <div>
+‎          <label className="block text-sm font-medium mb-1">Price per Unit ($)</label>
+‎          <input
+‎            type="number"
+‎            name="price"
+‎            value={sale.price}
+‎            onChange={handleInputChange}
+‎            className="w-full px-3 py-2 border rounded"
+‎            min="0.01"
+‎            step="0.01"
+‎            required
+‎          />
+‎        </div>
+‎        
+‎        <div>
+‎          <label className="block text-sm font-medium mb-1">Total</label>
+‎          <input
+‎            type="text"
+‎            value={
+‎              sale.quantity && sale.price 
+‎                ? `$${(parseFloat(sale.quantity) * parseFloat(sale.price)).toFixed(2)}`
+‎                : '$0.00'
+‎            }
+‎            className="w-full px-3 py-2 border rounded bg-gray-100"
+‎            readOnly
+‎          />
+‎        </div>
+‎      </div>
+‎      
+‎      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+‎        <div>
+‎          <label className="block text-sm font-medium mb-1">Customer Name (Optional)</label>
+‎          <input
+‎            type="text"
+‎            name="customerName"
+‎            value={sale.customerName}
+‎            onChange={handleInputChange}
+‎            className="w-full px-3 py-2 border rounded"
+‎            placeholder="Walk-in"
+‎          />
+‎        </div>
+‎        
+‎        <div>
+‎          <label className="block text-sm font-medium mb-1">Customer Phone (Optional)</label>
+‎          <input
+‎            type="text"
+‎            name="customerPhone"
+‎            value={sale.customerPhone}
+‎            onChange={handleInputChange}
+‎            className="w-full px-3 py-2 border rounded"
+‎            placeholder="Phone number"
+‎          />
+‎        </div>
+‎      </div>
+‎      
+‎      <button
+‎        onClick={handleSubmit}
+‎        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+‎      >
+‎        Record Sale
+‎      </button>
+‎    </div>
+‎  )
+‎}
+‎
