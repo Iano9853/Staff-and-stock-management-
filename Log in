@@ -1,0 +1,110 @@
+‎'use client'
+‎import { useState } from 'react'
+‎import { useRouter } from 'next/navigation'
+‎import Link from 'next/link'
+‎
+‎export default function Login() {
+‎  const [credentials, setCredentials] = useState({
+‎    email: '',
+‎    password: ''
+‎  })
+‎  const [showPassword, setShowPassword] = useState(false)
+‎  const [error, setError] = useState('')
+‎  const [loading, setLoading] = useState(false)
+‎  const router = useRouter()
+‎
+‎  const handleChange = (e) => {
+‎    const { name, value } = e.target
+‎    setCredentials(prev => ({ ...prev, [name]: value }))
+‎  }
+‎
+‎  const handleSubmit = async (e) => {
+‎    e.preventDefault()
+‎    setLoading(true)
+‎    setError('')
+‎    
+‎    try {
+‎      const users = JSON.parse(localStorage.getItem('users')) || []
+‎      const user = users.find(u => 
+‎        (u.email === credentials.email || u.name === credentials.email) && 
+‎        u.password === credentials.password
+‎      )
+‎
+‎      if (!user) {
+‎        throw new Error('Invalid credentials')
+‎      }
+‎
+‎      if (user.role === 'employee' && !user.verified) {
+‎        throw new Error('Account pending admin verification. Please contact your administrator.')
+‎      }
+‎
+‎      // Update last login
+‎      const updatedUsers = users.map(u => 
+‎        u.id === user.id ? { ...u, lastLogin: new Date().toISOString() } : u
+‎      )
+‎      localStorage.setItem('users', JSON.stringify(updatedUsers))
+‎      localStorage.setItem('currentUser', JSON.stringify(user))
+‎
+‎      router.push(user.role === 'admin' ? '/admin/dashboard' : '/employee/dashboard')
+‎    } catch (err) {
+‎      setError(err.message)
+‎    } finally {
+‎      setLoading(false)
+‎    }
+‎  }
+‎
+‎  return (
+‎    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md mt-10">
+‎      <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+‎      {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+‎      
+‎      <form onSubmit={handleSubmit} className="space-y-4">
+‎        <div>
+‎          <label className="block text-sm font-medium mb-1">Email or Name</label>
+‎          <input
+‎            type="text"
+‎            name="email"
+‎            value={credentials.email}
+‎            onChange={handleChange}
+‎            className="w-full px-3 py-2 border rounded"
+‎            required
+‎          />
+‎        </div>
+‎        
+‎        <div>
+‎          <label className="block text-sm font-medium mb-1">Password</label>
+‎          <div className="relative">
+‎            <input
+‎              type={showPassword ? "text" : "password"}
+‎              name="password"
+‎              value={credentials.password}
+‎              onChange={handleChange}
+‎              className="w-full px-3 py-2 border rounded"
+‎              required
+‎            />
+‎            <button
+‎              type="button"
+‎              onClick={() => setShowPassword(!showPassword)}
+‎              className="absolute right-2 top-2 text-sm text-gray-600"
+‎            >
+‎              {showPassword ? 'Hide' : 'Show'}
+‎            </button>
+‎          </div>
+‎        </div>
+‎        
+‎        <button
+‎          type="submit"
+‎          disabled={loading}
+‎          className={`w-full py-2 rounded text-white transition ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+‎        >
+‎          {loading ? 'Logging in...' : 'Login'}
+‎        </button>
+‎        
+‎        <p className="text-center text-sm text-gray-600">
+‎          Don't have an account? <Link href="/signup" className="text-blue-600 hover:underline">Sign Up</Link>
+‎        </p>
+‎      </form>
+‎    </div>
+‎  )
+‎}
+‎
