@@ -1,0 +1,200 @@
+‎Employee dashboard 
+‎'use client'
+‎import { useEffect, useState } from 'react'
+‎import { useRouter } from 'next/navigation'
+‎import SalesRecording from '@/components/SalesRecording'
+‎import RequestSystem from '@/components/RequestSystem'
+‎import RecommendationSystem from '@/components/RecommendationSystem'
+‎import AIAssistant from '@/components/AIAssistant'
+‎
+‎export default function EmployeeDashboard() {
+‎  const [currentTab, setCurrentTab] = useState('dashboard')
+‎  const [user, setUser] = useState(null)
+‎  const [stock, setStock] = useState([])
+‎  const [sales, setSales] = useState([])
+‎  const [requests, setRequests] = useState([])
+‎  const router = useRouter()
+‎
+‎  useEffect(() => {
+‎    // Check authentication
+‎    const currentUser = JSON.parse(localStorage.getItem('currentUser'))
+‎    if (!currentUser || currentUser.role !== 'employee') {
+‎      router.push('/login')
+‎      return
+‎    }
+‎
+‎    if (!currentUser.verified) {
+‎      router.push('/login')
+‎      return
+‎    }
+‎
+‎    setUser(currentUser)
+‎    loadData(currentUser.shop)
+‎  }, [])
+‎
+‎  const loadData = (shop) => {
+‎    const loadedStock = JSON.parse(localStorage.getItem('stock')) || { boutique: [], decoration: [] }
+‎    const loadedSales = JSON.parse(localStorage.getItem('sales')) || []
+‎    const loadedRequests = JSON.parse(localStorage.getItem('requests')) || []
+‎    
+‎    setStock(loadedStock[shop] || [])
+‎    setSales(loadedSales.filter(sale => sale.shop === shop))
+‎    setRequests(loadedRequests.filter(req => req.shop === shop))
+‎  }
+‎
+‎  const handleLogout = () => {
+‎    localStorage.removeItem('currentUser')
+‎    router.push('/login')
+‎  }
+‎
+‎  if (!user) return <div className="container mx-auto p-4">Loading...</div>
+‎
+‎  return (
+‎    <div className="container mx-auto p-4">
+‎      <div className="flex justify-between items-center mb-6">
+‎        <div>
+‎          <h1 className="text-2xl font-bold">Employee Dashboard</h1>
+‎          <p className="text-gray-600">
+‎            {user.shop === 'boutique' ? 'Boutique Shop' : 'House Decoration Shop'}
+‎          </p>
+‎        </div>
+‎        <button 
+‎          onClick={handleLogout}
+‎          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+‎        >
+‎          Logout
+‎        </button>
+‎      </div>
+‎      
+‎      {/* Navigation Tabs */}
+‎      <div className="flex space-x-2 mb-6 overflow-x-auto">
+‎        <button 
+‎          onClick={() => setCurrentTab('dashboard')} 
+‎          className={`px-4 py-2 rounded ${currentTab === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+‎        >
+‎          Overview
+‎        </button>
+‎        <button 
+‎          onClick={() => setCurrentTab('stock')} 
+‎          className={`px-4 py-2 rounded ${currentTab === 'stock' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+‎        >
+‎          Stock ({stock.length})
+‎        </button>
+‎        <button 
+‎          onClick={() => setCurrentTab('sales')} 
+‎          className={`px-4 py-2 rounded ${currentTab === 'sales' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+‎        >
+‎          Record Sales
+‎        </button>
+‎        <button 
+‎          onClick={() => setCurrentTab('requests')} 
+‎          className={`px-4 py-2 rounded ${currentTab === 'requests' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+‎        >
+‎          Customer Requests
+‎        </button>
+‎        <button 
+‎          onClick={() => setCurrentTab('recommendations')} 
+‎          className={`px-4 py-2 rounded ${currentTab === 'recommendations' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+‎        >
+‎          Recommendations
+‎        </button>
+‎      </div>
+‎
+‎      {/* Dashboard Overview */}
+‎      {currentTab === 'dashboard' && (
+‎        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+‎          <div className="bg-white p-4 rounded-lg shadow">
+‎            <h3 className="font-medium text-gray-500">Available Stock</h3>
+‎            <p className="text-3xl font-bold">
+‎              {stock.reduce((sum, item) => sum + item.quantity, 0)} items
+‎            </p>
+‎          </div>
+‎          <div className="bg-white p-4 rounded-lg shadow">
+‎            <h3 className="font-medium text-gray-500">Total Sales</h3>
+‎            <p className="text-3xl font-bold">{sales.length}</p>
+‎          </div>
+‎          <div className="bg-white p-4 rounded-lg shadow">
+‎            <h3 className="font-medium text-gray-500">Pending Requests</h3>
+‎            <p className="text-3xl font-bold">
+‎              {requests.filter(r => !r.resolved).length}
+‎            </p>
+‎          </div>
+‎        </div>
+‎      )}
+‎
+‎      {/* Stock View */}
+‎      {currentTab === 'stock' && (
+‎        <div className="bg-white p-4 rounded-lg shadow mb-6">
+‎          <h2 className="text-xl font-semibold mb-4">Current Stock</h2>
+‎          <div className="overflow-x-auto">
+‎            <table className="min-w-full divide-y divide-gray-200">
+‎              <thead className="bg-gray-50">
+‎                <tr>
+‎                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+‎                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
+‎                  {user.shop === 'boutique' && (
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gender</th>
+‎                  )}
+‎                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+‎                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+‎                </tr>
+‎              </thead>
+‎              <tbody className="bg-white divide-y divide-gray-200">
+‎                {stock.map((item) => (
+‎                  <tr key={item.id}>
+‎                    <td className="px-6 py-4 whitespace-nowrap">{item.name}</td>
+‎                    <td className="px-6 py-4 whitespace-nowrap">{item.brand}</td>
+‎                    {user.shop === 'boutique' && (
+‎                      <td className="px-6 py-4 whitespace-nowrap">{item.gender}</td>
+‎                    )}
+‎                    <td className="px-6 py-4 whitespace-nowrap">
+‎                      <span className={`px-2 py-1 rounded-full text-xs ${
+‎                        item.quantity > 10 ? 'bg-green-100 text-green-800' : 
+‎                        item.quantity > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+‎                      }`}>
+‎                        {item.quantity}
+‎                      </span>
+‎                    </td>
+‎                    <td className="px-6 py-4 whitespace-nowrap">${item.price}</td>
+‎                  </tr>
+‎                ))}
+‎              </tbody>
+‎            </table>
+‎          </div>
+‎        </div>
+‎      )}
+‎
+‎      {/* Sales Recording */}
+‎      {currentTab === 'sales' && (
+‎        <SalesRecording 
+‎          stock={stock} 
+‎          shop={user.shop} 
+‎          onUpdate={() => loadData(user.shop)} 
+‎        />
+‎      )}
+‎
+‎      {/* Customer Requests */}
+‎      {currentTab === 'requests' && (
+‎        <RequestSystem 
+‎          requests={requests} 
+‎          setRequests={setRequests} 
+‎          isAdmin={false} 
+‎          shop={user.shop} 
+‎        />
+‎      )}
+‎
+‎      {/* Recommendations */}
+‎      {currentTab === 'recommendations' && (
+‎        <RecommendationSystem 
+‎          recommendations={recommendations} 
+‎          setRecommendations={setRecommendations} 
+‎          isAdmin={false} 
+‎          shop={user.shop} 
+‎        />
+‎      )}
+‎      
+‎      <AIAssistant role="employee" shop={user.shop} />
+‎    </div>
+‎  )
+‎}
+‎
