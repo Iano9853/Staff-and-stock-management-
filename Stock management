@@ -1,0 +1,245 @@
+‎'use client'
+‎import { useState } from 'react'
+‎
+‎export default function StockManagement({ stock, setStock, onUpdate }) {
+‎  const [activeShop, setActiveShop] = useState('boutique')
+‎  const [newItem, setNewItem] = useState({
+‎    name: '',
+‎    brand: '',
+‎    gender: '',
+‎    quantity: '',
+‎    price: ''
+‎  })
+‎  const [error, setError] = useState('')
+‎
+‎  const handleAddItem = () => {
+‎    setError('')
+‎    
+‎    // Validation
+‎    if (!newItem.name || !newItem.brand || !newItem.quantity || !newItem.price) {
+‎      setError('All fields are required')
+‎      return
+‎    }
+‎    
+‎    if (activeShop === 'boutique' && !newItem.gender) {
+‎      setError('Gender is required for boutique items')
+‎      return
+‎    }
+‎
+‎    const quantity = parseInt(newItem.quantity)
+‎    const price = parseFloat(newItem.price)
+‎
+‎    if (isNaN(quantity) {
+‎      setError('Quantity must be a number')
+‎      return
+‎    }
+‎
+‎    if (isNaN(price)) {
+‎      setError('Price must be a number')
+‎      return
+‎    }
+‎
+‎    const updatedStock = {
+‎      ...stock,
+‎      [activeShop]: [
+‎        ...stock[activeShop],
+‎        {
+‎          id: Date.now(),
+‎          name: newItem.name,
+‎          brand: newItem.brand,
+‎          gender: activeShop === 'boutique' ? newItem.gender : undefined,
+‎          quantity,
+‎          price
+‎        }
+‎      ]
+‎    }
+‎
+‎    setStock(updatedStock)
+‎    localStorage.setItem('stock', JSON.stringify(updatedStock))
+‎    setNewItem({
+‎      name: '',
+‎      brand: '',
+‎      gender: '',
+‎      quantity: '',
+‎      price: ''
+‎    })
+‎    if (onUpdate) onUpdate()
+‎  }
+‎
+‎  const handleRemoveItem = (itemId) => {
+‎    if (window.confirm('Are you sure you want to remove this item?')) {
+‎      const updatedStock = {
+‎        ...stock,
+‎        [activeShop]: stock[activeShop].filter(item => item.id !== itemId)
+‎      }
+‎      setStock(updatedStock)
+‎      localStorage.setItem('stock', JSON.stringify(updatedStock))
+‎      if (onUpdate) onUpdate()
+‎    }
+‎  }
+‎
+‎  const handleInputChange = (e) => {
+‎    const { name, value } = e.target
+‎    setNewItem(prev => ({ ...prev, [name]: value }))
+‎  }
+‎
+‎  return (
+‎    <div className="bg-white p-4 rounded-lg shadow">
+‎      <h2 className="text-xl font-semibold mb-4">Stock Management</h2>
+‎      
+‎      <div className="flex space-x-2 mb-4">
+‎        <button 
+‎          onClick={() => setActiveShop('boutique')} 
+‎          className={`px-4 py-2 rounded ${activeShop === 'boutique' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+‎        >
+‎          Boutique Shop
+‎        </button>
+‎        <button 
+‎          onClick={() => setActiveShop('decoration')} 
+‎          className={`px-4 py-2 rounded ${activeShop === 'decoration' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+‎        >
+‎          House Decoration
+‎        </button>
+‎      </div>
+‎
+‎      {/* Add item form */}
+‎      <div className="mb-6 p-4 border rounded">
+‎        <h3 className="font-medium mb-2">Add New Item</h3>
+‎        {error && <p className="text-red-500 mb-2">{error}</p>}
+‎        
+‎        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+‎          <div>
+‎            <label className="block text-sm font-medium mb-1">Item Name</label>
+‎            <input
+‎              type="text"
+‎              name="name"
+‎              value={newItem.name}
+‎              onChange={handleInputChange}
+‎              className="w-full px-3 py-2 border rounded"
+‎              required
+‎            />
+‎          </div>
+‎          <div>
+‎            <label className="block text-sm font-medium mb-1">Brand</label>
+‎            <input
+‎              type="text"
+‎              name="brand"
+‎              value={newItem.brand}
+‎              onChange={handleInputChange}
+‎              className="w-full px-3 py-2 border rounded"
+‎              required
+‎            />
+‎          </div>
+‎        </div>
+‎        
+‎        {activeShop === 'boutique' && (
+‎          <div className="mb-3">
+‎            <label className="block text-sm font-medium mb-1">Gender</label>
+‎            <select
+‎              name="gender"
+‎              value={newItem.gender}
+‎              onChange={handleInputChange}
+‎              className="w-full px-3 py-2 border rounded"
+‎              required
+‎            >
+‎              <option value="">Select Gender</option>
+‎              <option value="Men">Men</option>
+‎              <option value="Women">Women</option>
+‎              <option value="Unisex">Unisex</option>
+‎              <option value="Kids">Kids</option>
+‎            </select>
+‎          </div>
+‎        )}
+‎        
+‎        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+‎          <div>
+‎            <label className="block text-sm font-medium mb-1">Quantity</label>
+‎            <input
+‎              type="number"
+‎              name="quantity"
+‎              value={newItem.quantity}
+‎              onChange={handleInputChange}
+‎              className="w-full px-3 py-2 border rounded"
+‎              min="0"
+‎              required
+‎            />
+‎          </div>
+‎          <div>
+‎            <label className="block text-sm font-medium mb-1">Price ($)</label>
+‎            <input
+‎              type="number"
+‎              name="price"
+‎              value={newItem.price}
+‎              onChange={handleInputChange}
+‎              className="w-full px-3 py-2 border rounded"
+‎              min="0"
+‎              step="0.01"
+‎              required
+‎            />
+‎          </div>
+‎        </div>
+‎        
+‎        <button 
+‎          onClick={handleAddItem}
+‎          className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+‎        >
+‎          Add Item
+‎        </button>
+‎      </div>
+‎
+‎      {/* Stock list */}
+‎      <div>
+‎        <h3 className="font-medium mb-2">Current Stock ({stock[activeShop]?.length || 0} items)</h3>
+‎        {stock[activeShop]?.length === 0 ? (
+‎          <p className="text-gray-500">No items in stock for this shop</p>
+‎        ) : (
+‎          <div className="overflow-x-auto">
+‎            <table className="min-w-full divide-y divide-gray-200">
+‎              <thead className="bg-gray-50">
+‎                <tr>
+‎                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+‎                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
+‎                  {activeShop === 'boutique' && (
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gender</th>
+‎                  )}
+‎                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+‎                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+‎                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+‎                </tr>
+‎              </thead>
+‎              <tbody className="bg-white divide-y divide-gray-200">
+‎                {stock[activeShop]?.map(item => (
+‎                  <tr key={item.id}>
+‎                    <td className="px-6 py-4 whitespace-nowrap">{item.name}</td>
+‎                    <td className="px-6 py-4 whitespace-nowrap">{item.brand}</td>
+‎                    {activeShop === 'boutique' && (
+‎                      <td className="px-6 py-4 whitespace-nowrap">{item.gender}</td>
+‎                    )}
+‎                    <td className="px-6 py-4 whitespace-nowrap">
+‎                      <span className={`px-2 py-1 rounded-full text-xs ${
+‎                        item.quantity > 10 ? 'bg-green-100 text-green-800' : 
+‎                        item.quantity > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+‎                      }`}>
+‎                        {item.quantity}
+‎                      </span>
+‎                    </td>
+‎                    <td className="px-6 py-4 whitespace-nowrap">${item.price.toFixed(2)}</td>
+‎                    <td className="px-6 py-4 whitespace-nowrap">
+‎                      <button 
+‎                        onClick={() => handleRemoveItem(item.id)}
+‎                        className="text-red-600 hover:text-red-800"
+‎                      >
+‎                        Remove
+‎                      </button>
+‎                    </td>
+‎                  </tr>
+‎                ))}
+‎              </tbody>
+‎            </table>
+‎          </div>
+‎        )}
+‎      </div>
+‎    </div>
+‎  )
+‎}
+‎
