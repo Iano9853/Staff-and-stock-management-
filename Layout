@@ -1,0 +1,21 @@
+‎import './globals.css'
+‎import NotificationSystem from '@/components/NotificationSystem'
+‎
+‎export const metadata = {
+‎  title: 'Staff & Stock Manager',
+‎  description: 'Business management system',
+‎}
+‎
+‎export default function RootLayout({ children }) {
+‎  return (
+‎    <html lang="en">
+‎      <body className="bg-gray-50">
+‎        <NotificationSystem />
+‎        <main className="min-h-screen">
+‎          {children}
+‎        </main>
+‎      </body>
+‎    </html>
+‎  )
+‎}
+‎
