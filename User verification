@@ -1,0 +1,189 @@
+‎'use client'
+‎import { useState } from 'react'
+‎
+‎export default function UserVerification({ users, onVerify, onDelete }) {
+‎  const [searchTerm, setSearchTerm] = useState('')
+‎  const [currentView, setCurrentView] = useState('pending') // 'pending' or 'all'
+‎
+‎  const pendingEmployees = users.filter(user => 
+‎    user.role === 'employee' && !user.verified
+‎  )
+‎  
+‎  const allEmployees = users.filter(user => user.role === 'employee')
+‎  const admins = users.filter(user => user.role === 'admin')
+‎
+‎  const filteredPending = pendingEmployees.filter(user =>
+‎    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+‎    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+‎  )
+‎  
+‎  const filteredEmployees = allEmployees.filter(user =>
+‎    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+‎    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+‎  )
+‎
+‎  return (
+‎    <div className="bg-white p-4 rounded-lg shadow">
+‎      <div className="flex justify-between items-center mb-4">
+‎        <h2 className="text-xl font-semibold">
+‎          {currentView === 'pending' ? 'Pending Verifications' : 'User Management'}
+‎        </h2>
+‎        
+‎        <div className="flex space-x-2">
+‎          <input
+‎            type="text"
+‎            placeholder="Search users..."
+‎            value={searchTerm}
+‎            onChange={(e) => setSearchTerm(e.target.value)}
+‎            className="px-3 py-1 border rounded"
+‎          />
+‎          <button
+‎            onClick={() => setCurrentView(currentView === 'pending' ? 'all' : 'pending')}
+‎            className="px-3 py-1 bg-blue-600 text-white rounded"
+‎          >
+‎            {currentView === 'pending' ? 'View All' : 'View Pending'}
+‎          </button>
+‎        </div>
+‎      </div>
+‎
+‎      {currentView === 'pending' ? (
+‎        <>
+‎          {filteredPending.length === 0 ? (
+‎            <p className="text-gray-500">No pending verifications</p>
+‎          ) : (
+‎            <div className="overflow-x-auto">
+‎              <table className="min-w-full divide-y divide-gray-200">
+‎                <thead className="bg-gray-50">
+‎                  <tr>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Shop</th>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+‎                  </tr>
+‎                </thead>
+‎                <tbody className="bg-white divide-y divide-gray-200">
+‎                  {filteredPending.map(user => (
+‎                    <tr key={user.id}>
+‎                      <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
+‎                      <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+‎                      <td className="px-6 py-4 whitespace-nowrap">
+‎                        {user.shop === 'boutique' ? 'Boutique' : 'House Decoration'}
+‎                      </td>
+‎                      <td className="px-6 py-4 whitespace-nowrap space-x-2">
+‎                        <button
+‎                          onClick={() => onVerify(user.id)}
+‎                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+‎                        >
+‎                          Verify
+‎                        </button>
+‎                        <button
+‎                          onClick={() => onDelete(user.id)}
+‎                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+‎                        >
+‎                          Delete
+‎                        </button>
+‎                      </td>
+‎                    </tr>
+‎                  ))}
+‎                </tbody>
+‎              </table>
+‎            </div>
+‎          )}
+‎        </>
+‎      ) : (
+‎        <>
+‎          <h3 className="font-medium mb-2">Admins ({admins.length})</h3>
+‎          {admins.length > 0 ? (
+‎            <div className="overflow-x-auto mb-6">
+‎              <table className="min-w-full divide-y divide-gray-200">
+‎                <thead className="bg-gray-50">
+‎                  <tr>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+‎                  </tr>
+‎                </thead>
+‎                <tbody className="bg-white divide-y divide-gray-200">
+‎                  {admins.map(user => (
+‎                    <tr key={user.id}>
+‎                      <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
+‎                      <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+‎                      <td className="px-6 py-4 whitespace-nowrap">
+‎                        {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
+‎                      </td>
+‎                      <td className="px-6 py-4 whitespace-nowrap">
+‎                        <button
+‎                          onClick={() => onDelete(user.id)}
+‎                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+‎                        >
+‎                          Delete
+‎                        </button>
+‎                      </td>
+‎                    </tr>
+‎                  ))}
+‎                </tbody>
+‎              </table>
+‎            </div>
+‎          ) : (
+‎            <p className="text-gray-500 mb-6">No admin users</p>
+‎          )}
+‎
+‎          <h3 className="font-medium mb-2">Employees ({filteredEmployees.length})</h3>
+‎          {filteredEmployees.length > 0 ? (
+‎            <div className="overflow-x-auto">
+‎              <table className="min-w-full divide-y divide-gray-200">
+‎                <thead className="bg-gray-50">
+‎                  <tr>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Shop</th>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+‎                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+‎                  </tr>
+‎                </thead>
+‎                <tbody className="bg-white divide-y divide-gray-200">
+‎                  {filteredEmployees.map(user => (
+‎                    <tr key={user.id}>
+‎                      <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
+‎                      <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+‎                      <td className="px-6 py-4 whitespace-nowrap">
+‎                        {user.shop === 'boutique' ? 'Boutique' : 'House Decoration'}
+‎                      </td>
+‎                      <td className="px-6 py-4 whitespace-nowrap">
+‎                        <span className={`px-2 py-1 rounded-full text-xs ${
+‎                          user.verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+‎                        }`}>
+‎                          {user.verified ? 'Verified' : 'Pending'}
+‎                        </span>
+‎                      </td>
+‎                      <td className="px-6 py-4 whitespace-nowrap space-x-2">
+‎                        {!user.verified && (
+‎                          <button
+‎                            onClick={() => onVerify(user.id)}
+‎                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+‎                          >
+‎                            Verify
+‎                          </button>
+‎                        )}
+‎                        <button
+‎                          onClick={() => onDelete(user.id)}
+‎                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+‎                        >
+‎                          Delete
+‎                        </button>
+‎                      </td>
+‎                    </tr>
+‎                  ))}
+‎                </tbody>
+‎              </table>
+‎            </div>
+‎          ) : (
+‎            <p className="text-gray-500">No employees found</p>
+‎          )}
+‎        </>
+‎      )}
+‎    </div>
+‎  )
+‎}
+‎
