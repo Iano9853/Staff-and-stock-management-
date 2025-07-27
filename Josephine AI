@@ -1,0 +1,221 @@
+‎'use client'
+‎import { useState, useEffect } from 'react'
+‎import { useRouter } from 'next/navigation'
+‎
+‎export default function AIAssistant({ role, shop, onAction }) {
+‎  const [isOpen, setIsOpen] = useState(false)
+‎  const [messages, setMessages] = useState([])
+‎  const [input, setInput] = useState('')
+‎  const [isTyping, setIsTyping] = useState(false)
+‎  const router = useRouter()
+‎
+‎  const initialGreeting = {
+‎    text: `Hi there! I'm Josephine, your AI assistant. How can I help you today?`,
+‎    sender: 'ai'
+‎  }
+‎
+‎  useEffect(() => {
+‎    if (isOpen && messages.length === 0) {
+‎      setMessages([initialGreeting])
+‎    }
+‎  }, [isOpen])
+‎
+‎  const handleSend = () => {
+‎    if (!input.trim()) return
+‎
+‎    const userMessage = {
+‎      text: input,
+‎      sender: 'user'
+‎    }
+‎    setMessages(prev => [...prev, userMessage])
+‎    setInput('')
+‎    setIsTyping(true)
+‎
+‎    // Simulate AI response
+‎    setTimeout(() => {
+‎      const response = generateAIResponse(input, role, shop)
+‎      setMessages(prev => [...prev, response])
+‎      setIsTyping(false)
+‎
+‎      // Handle actions if needed
+‎      if (response.action) {
+‎        handleAction(response.action)
+‎      }
+‎    }, 1000)
+‎  }
+‎
+‎  const generateAIResponse = (input, role, shop) => {
+‎    const lowerInput = input.toLowerCase()
+‎
+‎    // General responses
+‎    if (lowerInput.includes('hello') || lowerInput.includes('hi')) {
+‎      return {
+‎        text: "Hello! How can I assist you today?",
+‎        sender: 'ai'
+‎      }
+‎    }
+‎
+‎    if (lowerInput.includes('help')) {
+‎      return {
+‎        text: `I can help you with:
+‎        - ${role === 'admin' ? 'Managing users and stock' : 'Checking stock and recording sales'}
+‎        - Answering questions about the system
+‎        - Generating reports
+‎        - Troubleshooting issues
+‎        What do you need help with specifically?`,
+‎        sender: 'ai'
+‎      }
+‎    }
+‎
+‎    // Role-specific responses
+‎    if (role === 'admin') {
+‎      if (lowerInput.includes('verify') || lowerInput.includes('approve')) {
+‎        return {
+‎          text: "I can show you pending employee verifications. Would you like me to take you to the User Management section?",
+‎          sender: 'ai',
+‎          action: 'navigate_users'
+‎        }
+‎      }
+‎
+‎      if (lowerInput.includes('stock') || lowerInput.includes('inventory')) {
+‎        return {
+‎          text: "I can help with stock management. Would you like to view or update stock levels?",
+‎          sender: 'ai',
+‎          action: 'navigate_stock'
+‎        }
+‎      }
+‎    } else {
+‎      if (lowerInput.includes('stock') || lowerInput.includes('inventory')) {
+‎        const shopStock = JSON.parse(localStorage.getItem('stock'))[shop]
+‎        const lowStockItems = shopStock.filter(item => item.quantity < 5)
+‎        
+‎        if (lowStockItems.length > 0) {
+‎          return {
+‎            text: `Your shop has ${lowStockItems.length} items with low stock. Consider informing the admin about: ${lowStockItems.map(item => item.name).join(', ')}`,
+‎            sender: 'ai'
+‎          }
+‎        } else {
+‎          return {
+‎            text: "All items in your shop have sufficient stock levels.",
+‎            sender: 'ai'
+‎          }
+‎        }
+‎      }
+‎
+‎      if (lowerInput.includes('sale') || lowerInput.includes('record')) {
+‎        return {
+‎          text: "Would you like to record a new sale? I can take you to the sales recording section.",
+‎          sender: 'ai',
+‎          action: 'navigate_sales'
+‎        }
+‎      }
+‎    }
+‎
+‎    // Data export
+‎    if (lowerInput.includes('export') && role === 'admin') {
+‎      return {
+‎        text: "I can help you export data. Would you like to export user, stock, or sales data?",
+‎        sender: 'ai',
+‎        action: 'navigate_export'
+‎      }
+‎    }
+‎
+‎    // Default response
+‎    return {
+‎      text: "I'm here to help! Could you clarify your request?",
+‎      sender: 'ai'
+‎    }
+‎  }
+‎
+‎  const handleAction = (action) => {
+‎    switch (action) {
+‎      case 'navigate_users':
+‎        router.push('/admin/dashboard?tab=users')
+‎        break
+‎      case 'navigate_stock':
+‎        router.push('/admin/dashboard?tab=stock')
+‎        break
+‎      case 'navigate_sales':
+‎        router.push('/employee/dashboard?tab=sales')
+‎        break
+‎      case 'navigate_export':
+‎        router.push('/admin/dashboard?tab=export')
+‎        break
+‎      default:
+‎        break
+‎    }
+‎    if (onAction) onAction()
+‎  }
+‎
+‎  const handleKeyPress = (e) => {
+‎    if (e.key === 'Enter') {
+‎      handleSend()
+‎    }
+‎  }
+‎
+‎  return (
+‎    <>
+‎      <button
+‎        onClick={() => setIsOpen(!isOpen)}
+‎        className="fixed bottom-6 right-6 bg-purple-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-purple-700 transition"
+‎      >
+‎        <span className="text-2xl">J</span>
+‎      </button>
+‎
+‎      {isOpen && (
+‎        <div className="fixed bottom-24 right-6 w-80 bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col">
+‎          <div className="bg-purple-600 text-white p-3 rounded-t-lg flex justify-between items-center">
+‎            <h3 className="font-medium">Josephine AI Assistant</h3>
+‎            <button onClick={() => setIsOpen(false)} className="text-white hover:text-purple-200">
+‎              ×
+‎            </button>
+‎          </div>
+‎          
+‎          <div className="p-3 flex-1 overflow-y-auto max-h-80">
+‎            {messages.map((message, index) => (
+‎              <div 
+‎                key={index} 
+‎                className={`mb-3 ${message.sender === 'ai' ? 'text-left' : 'text-right'}`}
+‎              >
+‎                <div className={`inline-block px-3 py-2 rounded-lg ${message.sender === 'ai' ? 'bg-gray-100' : 'bg-purple-100'}`}>
+‎                  {message.text}
+‎                </div>
+‎              </div>
+‎            ))}
+‎            {isTyping && (
+‎              <div className="text-left">
+‎                <div className="inline-block px-3 py-2 rounded-lg bg-gray-100">
+‎                  <div className="flex space-x-1">
+‎                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+‎                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+‎                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+‎                  </div>
+‎                </div>
+‎              </div>
+‎            )}
+‎          </div>
+‎          
+‎          <div className="p-3 border-t border-gray-200">
+‎            <div className="flex">
+‎              <input
+‎                type="text"
+‎                value={input}
+‎                onChange={(e) => setInput(e.target.value)}
+‎                onKeyPress={handleKeyPress}
+‎                placeholder="Type your message..."
+‎                className="flex-1 border rounded-l-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500"
+‎              />
+‎              <button
+‎                onClick={handleSend}
+‎                className="bg-purple-600 text-white px-4 py-2 rounded-r-lg hover:bg-purple-700"
+‎              >
+‎                Send
+‎              </button>
+‎            </div>
+‎          </div>
+‎        </div>
+‎      )}
+‎    </>
+‎  )
+‎}
+‎
