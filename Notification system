@@ -1,0 +1,92 @@
+‎'use client'
+‎import { useEffect, useState } from 'react'
+‎
+‎export default function NotificationSystem() {
+‎  const [notifications, setNotifications] = useState([])
+‎
+‎  useEffect(() => {
+‎    // Check for low stock items
+‎    const checkStock = () => {
+‎      const stock = JSON.parse(localStorage.getItem('stock')) || { boutique: [], decoration: [] }
+‎      const lowStockItems = [
+‎        ...stock.boutique.filter(item => item.quantity < 5),
+‎        ...stock.decoration.filter(item => item.quantity < 5)
+‎      ]
+‎      
+‎      if (lowStockItems.length > 0) {
+‎        setNotifications(prev => [
+‎          ...prev.filter(n => n.type !== 'low-stock'),
+‎          {
+‎            id: 'low-stock',
+‎            type: 'low-stock',
+‎            message: `${lowStockItems.length} items have low stock`,
+‎            timestamp: new Date().toISOString()
+‎          }
+‎        ])
+‎      }
+‎    }
+‎
+‎    // Check for pending verifications
+‎    const checkVerifications = () => {
+‎      const users = JSON.parse(localStorage.getItem('users')) || []
+‎      const pending = users.filter(user => user.role === 'employee' && !user.verified)
+‎      
+‎      if (pending.length > 0) {
+‎        setNotifications(prev => [
+‎          ...prev.filter(n => n.type !== 'pending-verification'),
+‎          {
+‎            id: 'pending-verification',
+‎            type: 'pending-verification',
+‎            message: `${pending.length} employees pending verification`,
+‎            timestamp: new Date().toISOString()
+‎          }
+‎        ])
+‎      }
+‎    }
+‎
+‎    checkStock()
+‎    checkVerifications()
+‎    const interval = setInterval(() => {
+‎      checkStock()
+‎      checkVerifications()
+‎    }, 30000) // Check every 30 seconds
+‎
+‎    return () => clearInterval(interval)
+‎  }, [])
+‎
+‎  const removeNotification = (id) => {
+‎    setNotifications(prev => prev.filter(n => n.id !== id))
+‎  }
+‎
+‎  if (notifications.length === 0) return null
+‎
+‎  return (
+‎    <div className="fixed top-4 right-4 space-y-2 z-50">
+‎      {notifications.map(notification => (
+‎        <div 
+‎          key={notification.id}
+‎          className={`p-3 rounded shadow-lg flex items-start max-w-xs ${
+‎            notification.type === 'low-stock' ? 'bg-yellow-50 border-l-4 border-yellow-400' :
+‎            notification.type === 'pending-verification' ? 'bg-blue-50 border-l-4 border-blue-400' :
+‎            'bg-gray-50 border-l-4 border-gray-400'
+‎          }`}
+‎        >
+‎          <div className="flex-1">
+‎            <p className="text-sm font-medium">
+‎              {notification.type === 'low-stock' ? 'Low Stock Alert' : 
+‎               notification.type === 'pending-verification' ? 'Pending Verifications' : 'Notification'}
+‎            </p>
+‎            <p className="text-sm">{notification.message}</p>
+‎          </div>
+‎          <button 
+‎            onClick={() => removeNotification(notification.id)}
+‎            className="ml-2 text-gray-500 hover:text-gray-700"
+‎          >
+‎            ×
+‎          </button>
+‎        </div>
+‎      ))}
+‎    </div>
+‎  )
+‎}
+‎
